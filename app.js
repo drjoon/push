@@ -23,9 +23,16 @@ app.use(urlencoded({ extended: true }));
 // CORS 설정
 app.use(
   cors({
-    origin: process.env.ALLOWED_ORIGINS
-      ? process.env.ALLOWED_ORIGINS.split(",")
-      : ["http://localhost:8000"], // 개발용
+    origin: (origin, callback) => {
+      const allowed = (process.env.ALLOWED_ORIGINS || "")
+        .split(",")
+        .map((o) => o.trim().replace(/\/$/, "")); // 끝 슬래시 제거
+      if (!origin || allowed.includes(origin.replace(/\/$/, ""))) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS not allowed"));
+      }
+    },
     credentials: true,
   })
 );
