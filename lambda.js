@@ -10,13 +10,6 @@ dotenv.config();
 // Express 앱 초기화
 const app = express();
 
-// 허용된 오리진 목록 (하드코딩으로 보안 강화)
-const ALLOWED_ORIGINS = [
-  "https://yellow-parasol.com",
-  "https://braces.fit",
-  "http://localhost:8000", // Vite 기본 포트
-];
-
 // Pushover 설정 (환경 변수 사용)
 const push = new Push({
   user: process.env.PUSHOVER_USER_KEY,
@@ -42,9 +35,6 @@ app.use(
         .map((o) => o.trim().replace(/\/$/, ""))
         .filter((o) => o.length > 0);
 
-      // 모든 허용된 오리진 합치기
-      const allAllowed = [...ALLOWED_ORIGINS, ...envAllowed];
-
       // origin이 undefined인 경우 (직접 API 호출, 모바일 앱 등)
       if (!origin) {
         console.log("Origin 없음 - 허용");
@@ -54,11 +44,11 @@ app.use(
       // 정규화 (끝 슬래시 제거)
       const normalizedOrigin = origin.replace(/\/$/, "");
 
-      if (allAllowed.includes(normalizedOrigin)) {
+      if (envAllowed.includes(normalizedOrigin)) {
         console.log("✅ CORS 허용:", origin);
         callback(null, true);
       } else {
-        console.log("❌ CORS 거부:", origin, "허용된 목록:", allAllowed);
+        console.log("❌ CORS 거부:", origin, "허용된 목록:", envAllowed);
         callback(new Error("CORS not allowed"), false);
       }
     },
@@ -78,9 +68,7 @@ app.use((req, res, next) => {
     .map((o) => o.trim().replace(/\/$/, ""))
     .filter((o) => o.length > 0);
 
-  const allAllowed = [...ALLOWED_ORIGINS, ...envAllowed];
-
-  if (!origin || allAllowed.includes(origin.replace(/\/$/, ""))) {
+  if (!origin || envAllowed.includes(origin.replace(/\/$/, ""))) {
     res.header("Access-Control-Allow-Origin", origin || "*");
     res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.header(
